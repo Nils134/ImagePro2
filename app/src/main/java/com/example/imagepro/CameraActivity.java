@@ -19,6 +19,8 @@ import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
 public class CameraActivity extends Activity implements CameraBridgeViewBase.CvCameraViewListener2{
@@ -113,7 +115,38 @@ public class CameraActivity extends Activity implements CameraBridgeViewBase.CvC
         mRgba=inputFrame.rgba();
         mGray=inputFrame.gray();
 
-        return mRgba;
+        Mat edges = new Mat();
+
+        Imgproc.Canny(mRgba, edges, 80,200);
+
+        Mat lines = new Mat();
+
+        Point pnt = new Point();
+        Point pnt1 = new Point();
+
+        double a,b;
+        double x0,y0;
+        Imgproc.HoughLines(edges, lines,1.0, Math.PI/180, 140);
+
+        for (int i = 0; i <lines.rows() ; i++) {
+            double[] vector = lines.get(i, 0);
+            double rho = vector[0];
+            double theta = vector[1];
+            a = Math.cos(theta);
+            b = Math.sin(theta);
+            x0 = a*rho;
+            y0 = b*rho;
+
+            pnt.x = Math.round(x0+1000*(-b));
+            pnt.y = Math.round(y0+1000*a);
+
+            pnt1.x = Math.round(x0-1000*(-b));
+            pnt1.y = Math.round(y0-1000*a);
+
+            Imgproc.line(mRgba, pnt, pnt1, new Scalar(255,255,255), 1, Imgproc.LINE_AA, 0);
+        }
+
+        return edges;
 
     }
 
